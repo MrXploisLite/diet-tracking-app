@@ -1,71 +1,133 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useApp } from '../context/AppContext';
+import { 
+  DailySummaryCard, 
+  EmptyState, 
+  Heading1, 
+  Heading4, 
+  BodyText,
+  Caption,
+  ThemedText,
+} from '../components';
+import { getTodaysCalorieData, getTodaysMeals, formatDate, getToday } from '../utils';
 
 export const HomeScreen: React.FC = () => {
   const { theme, profile, meals } = useApp();
 
-  const today = new Date().toISOString().split('T')[0];
-  const todaysMeals = meals.filter(meal => meal.date === today);
+  const calorieData = getTodaysCalorieData(profile, meals);
+  const todaysMeals = getTodaysMeals(meals);
+  const today = getToday();
   
-  const totalCalories = todaysMeals.reduce((sum, meal) => sum + meal.calories, 0);
   const totalProtein = todaysMeals.reduce((sum, meal) => sum + meal.protein, 0);
   const totalCarbs = todaysMeals.reduce((sum, meal) => sum + meal.carbs, 0);
   const totalFats = todaysMeals.reduce((sum, meal) => sum + meal.fats, 0);
 
+  const hasMeals = todaysMeals.length > 0;
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.colors.text }, theme.typography.h1]}>
+        <Heading1 style={styles.title}>
           Welcome, {profile.name}!
-        </Text>
-        
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.cardTitle, { color: theme.colors.text }, theme.typography.h3]}>
-            Today's Summary
-          </Text>
-          
-          <View style={styles.statsContainer}>
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: theme.colors.primary }, theme.typography.h2]}>
-                {totalCalories}
-              </Text>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }, theme.typography.caption]}>
-                Calories
-              </Text>
-            </View>
-            
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: theme.colors.primary }, theme.typography.h2]}>
-                {todaysMeals.length}
-              </Text>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }, theme.typography.caption]}>
-                Meals
-              </Text>
-            </View>
-          </View>
-        </View>
+        </Heading1>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.cardTitle, { color: theme.colors.text }, theme.typography.h4]}>
-            Macros
-          </Text>
-          
-          <View style={styles.macroRow}>
-            <Text style={[styles.macroLabel, { color: theme.colors.textSecondary }]}>Protein</Text>
-            <Text style={[styles.macroValue, { color: theme.colors.text }]}>{totalProtein}g</Text>
+        <Caption 
+          color={theme.colors.textSecondary} 
+          style={styles.dateLabel}
+        >
+          {formatDate(today)}
+        </Caption>
+        
+        <DailySummaryCard
+          goal={calorieData.goal}
+          consumed={calorieData.consumed}
+          remaining={calorieData.remaining}
+          progress={calorieData.progress}
+          style={styles.summaryCard}
+        />
+
+        {!hasMeals ? (
+          <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+            <EmptyState
+              icon="🍽️"
+              title="No meals logged yet"
+              message="Start tracking your nutrition by adding your first meal of the day!"
+            />
           </View>
-          
-          <View style={styles.macroRow}>
-            <Text style={[styles.macroLabel, { color: theme.colors.textSecondary }]}>Carbs</Text>
-            <Text style={[styles.macroValue, { color: theme.colors.text }]}>{totalCarbs}g</Text>
-          </View>
-          
-          <View style={styles.macroRow}>
-            <Text style={[styles.macroLabel, { color: theme.colors.textSecondary }]}>Fats</Text>
-            <Text style={[styles.macroValue, { color: theme.colors.text }]}>{totalFats}g</Text>
-          </View>
-        </View>
+        ) : (
+          <>
+            <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+              <Heading4 style={styles.cardTitle}>Macronutrients</Heading4>
+              
+              <View style={styles.macroRow}>
+                <BodyText color={theme.colors.textSecondary}>
+                  Protein
+                </BodyText>
+                <ThemedText 
+                  variant="bodyBold"
+                  color={theme.colors.text}
+                >
+                  {Math.round(totalProtein)}g
+                </ThemedText>
+              </View>
+              
+              <View style={[styles.macroRow, styles.macroDivider, { borderTopColor: theme.colors.border }]}>
+                <BodyText color={theme.colors.textSecondary}>
+                  Carbs
+                </BodyText>
+                <ThemedText 
+                  variant="bodyBold"
+                  color={theme.colors.text}
+                >
+                  {Math.round(totalCarbs)}g
+                </ThemedText>
+              </View>
+              
+              <View style={[styles.macroRow, styles.macroDivider, { borderTopColor: theme.colors.border }]}>
+                <BodyText color={theme.colors.textSecondary}>
+                  Fats
+                </BodyText>
+                <ThemedText 
+                  variant="bodyBold"
+                  color={theme.colors.text}
+                >
+                  {Math.round(totalFats)}g
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+              <Heading4 style={styles.cardTitle}>Today's Stats</Heading4>
+              
+              <View style={styles.statsGrid}>
+                <View style={styles.statBox}>
+                  <ThemedText 
+                    variant="h3" 
+                    color={theme.colors.primary}
+                  >
+                    {todaysMeals.length}
+                  </ThemedText>
+                  <Caption color={theme.colors.textSecondary}>
+                    Meals logged
+                  </Caption>
+                </View>
+                
+                <View style={styles.statBox}>
+                  <ThemedText 
+                    variant="h3" 
+                    color={theme.colors.success}
+                  >
+                    {Math.round(totalProtein + totalCarbs + totalFats)}g
+                  </ThemedText>
+                  <Caption color={theme.colors.textSecondary}>
+                    Total macros
+                  </Caption>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -77,39 +139,45 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingBottom: 32,
   },
   title: {
-    marginBottom: 24,
+    marginBottom: 8,
+  },
+  dateLabel: {
+    marginBottom: 20,
+  },
+  summaryCard: {
+    marginBottom: 16,
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cardTitle: {
     marginBottom: 16,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  stat: {
-    alignItems: 'center',
-  },
-  statValue: {
-    marginBottom: 4,
-  },
-  statLabel: {},
   macroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    alignItems: 'center',
+    paddingVertical: 12,
   },
-  macroLabel: {
-    fontSize: 16,
+  macroDivider: {
+    borderTopWidth: 1,
   },
-  macroValue: {
-    fontSize: 16,
-    fontWeight: '600',
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statBox: {
+    alignItems: 'center',
+    flex: 1,
   },
 });
