@@ -1,5 +1,7 @@
 import { ThemeMode } from '../theme';
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
 export interface Meal {
   id: string;
   name: string;
@@ -7,6 +9,7 @@ export interface Meal {
   protein: number;
   carbs: number;
   fats: number;
+  mealType: MealType;
   date: string;
   timestamp: number;
 }
