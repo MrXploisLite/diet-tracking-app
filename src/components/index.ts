@@ -5,4 +5,5 @@ export { Button } from './Button';
 export { EmptyState } from './EmptyState';
 export { MealCard } from './MealCard';
 export { MealForm } from './MealForm';
+export { SegmentedControl } from './SegmentedControl';
 export * from './Typography';
