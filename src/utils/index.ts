@@ -1,3 +1,4 @@
 export { StorageService } from './storage';
 export * from './date';
 export * from './calories';
+export * from './statistics';
