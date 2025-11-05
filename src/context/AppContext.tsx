@@ -14,6 +14,7 @@ interface AppContextType {
   updateMeal: (id: string, meal: Meal) => Promise<void>;
   deleteMeal: (id: string) => Promise<void>;
   toggleTheme: () => Promise<void>;
+  resetProfile: (clearMeals?: boolean) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -117,6 +118,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     await saveAppState({ theme: newTheme });
   };
 
+  const resetProfile = async (clearMeals: boolean = false) => {
+    const newProfile = defaultAppState.profile;
+    const newMeals = clearMeals ? [] : meals;
+    setProfileState(newProfile);
+    if (clearMeals) {
+      setMealsState(newMeals);
+    }
+    await saveAppState({ 
+      profile: newProfile, 
+      meals: newMeals 
+    });
+  };
+
   const theme = createTheme(themeMode);
 
   const value: AppContextType = {
@@ -130,6 +144,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateMeal,
     deleteMeal,
     toggleTheme,
+    resetProfile,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

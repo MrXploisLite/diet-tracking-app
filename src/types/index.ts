@@ -2,6 +2,15 @@ import { ThemeMode } from '../theme';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
+export type Gender = 'male' | 'female';
+
+export type ActivityLevel = 
+  | 'sedentary'
+  | 'lightly_active'
+  | 'moderately_active'
+  | 'very_active'
+  | 'extra_active';
+
 export interface Meal {
   id: string;
   name: string;
@@ -19,6 +28,8 @@ export interface UserProfile {
   age?: number;
   weight?: number;
   height?: number;
+  gender?: Gender;
+  activityLevel?: ActivityLevel;
   targetCalories?: number;
   targetProtein?: number;
   targetCarbs?: number;
