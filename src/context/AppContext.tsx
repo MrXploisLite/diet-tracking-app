@@ -73,18 +73,42 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const addMeal = async (meal: Meal) => {
+    const previousMeals = meals;
     const newMeals = [...meals, meal];
-    await setMeals(newMeals);
+    setMealsState(newMeals);
+    try {
+      await saveAppState({ meals: newMeals });
+    } catch (error) {
+      console.error('Error adding meal:', error);
+      setMealsState(previousMeals);
+      throw error;
+    }
   };
 
   const updateMeal = async (id: string, updatedMeal: Meal) => {
+    const previousMeals = meals;
     const newMeals = meals.map(m => (m.id === id ? updatedMeal : m));
-    await setMeals(newMeals);
+    setMealsState(newMeals);
+    try {
+      await saveAppState({ meals: newMeals });
+    } catch (error) {
+      console.error('Error updating meal:', error);
+      setMealsState(previousMeals);
+      throw error;
+    }
   };
 
   const deleteMeal = async (id: string) => {
+    const previousMeals = meals;
     const newMeals = meals.filter(m => m.id !== id);
-    await setMeals(newMeals);
+    setMealsState(newMeals);
+    try {
+      await saveAppState({ meals: newMeals });
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+      setMealsState(previousMeals);
+      throw error;
+    }
   };
 
   const toggleTheme = async () => {
