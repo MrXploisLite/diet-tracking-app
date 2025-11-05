@@ -10,9 +10,12 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useApp } from '../context/AppContext';
 import { Meal, MealType } from '../types';
 import { Button } from './Button';
+import { PhotoPicker } from './PhotoPicker';
+import { PhotoPreview } from './PhotoPreview';
 
 interface MealFormProps {
   meal?: Meal;
@@ -27,6 +30,8 @@ export const MealForm: React.FC<MealFormProps> = ({ meal, date, onClose }) => {
   const [name, setName] = useState(meal?.name || '');
   const [calories, setCalories] = useState(meal?.calories.toString() || '');
   const [mealType, setMealType] = useState<MealType>(meal?.mealType || 'breakfast');
+  const [photoUri, setPhotoUri] = useState<string | undefined>(meal?.photoUri);
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -46,6 +51,40 @@ export const MealForm: React.FC<MealFormProps> = ({ meal, date, onClose }) => {
       case 'snack':
         return '🍎';
     }
+  };
+
+  const compressImage = async (uri: string): Promise<string> => {
+    try {
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1024 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return manipResult.uri;
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      // Return original URI if compression fails
+      return uri;
+    }
+  };
+
+  const handlePhotoSelected = async (uri: string) => {
+    try {
+      const compressedUri = await compressImage(uri);
+      setPhotoUri(compressedUri);
+      setShowPhotoPicker(false);
+    } catch (error) {
+      console.error('Error handling photo:', error);
+      Alert.alert('Error', 'Failed to process photo. Please try again.');
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoUri(undefined);
+  };
+
+  const handleEditPhoto = () => {
+    setShowPhotoPicker(true);
   };
 
   const validate = () => {
@@ -84,6 +123,7 @@ export const MealForm: React.FC<MealFormProps> = ({ meal, date, onClose }) => {
         mealType,
         date: dateStr,
         timestamp,
+        photoUri,
       };
 
       if (isEditing) {
@@ -188,6 +228,35 @@ export const MealForm: React.FC<MealFormProps> = ({ meal, date, onClose }) => {
               ))}
             </View>
           </View>
+
+          <View style={styles.field}>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Photo (Optional)</Text>
+            {photoUri ? (
+              <PhotoPreview
+                uri={photoUri}
+                onRemove={handleRemovePhoto}
+                onEdit={handleEditPhoto}
+                size="medium"
+              />
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.photoButton,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => setShowPhotoPicker(true)}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.photoIcon}>📷</Text>
+                <Text style={[styles.photoButtonText, { color: theme.colors.text }]}>
+                  Add Photo
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         <View style={styles.actions}>
@@ -206,6 +275,13 @@ export const MealForm: React.FC<MealFormProps> = ({ meal, date, onClose }) => {
           />
         </View>
       </ScrollView>
+
+      <PhotoPicker
+        visible={showPhotoPicker}
+        onPhotoSelected={handlePhotoSelected}
+        onCancel={() => setShowPhotoPicker(false)}
+        existingPhoto={photoUri}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -271,6 +347,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   mealTypeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  photoButton: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderStyle: 'dashed',
+  },
+  photoIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  photoButtonText: {
     fontSize: 14,
     fontWeight: '600',
   },

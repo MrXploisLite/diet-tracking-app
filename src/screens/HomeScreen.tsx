@@ -9,21 +9,34 @@ import {
   BodyText,
   Caption,
   ThemedText,
+  StreakCard,
+  AchievementBadge,
+  WaterTracker,
 } from '../components';
 import { getTodaysCalorieData, getTodaysMeals, formatDate, getToday } from '../utils';
 
 export const HomeScreen: React.FC = () => {
-  const { theme, profile, meals } = useApp();
+  const { theme, profile, meals, waterIntakes, achievements, addWaterIntake } = useApp();
 
   const calorieData = getTodaysCalorieData(profile, meals);
   const todaysMeals = getTodaysMeals(meals);
-  const today = getToday();
+  const todayStr = getToday();
   
   const totalProtein = todaysMeals.reduce((sum, meal) => sum + meal.protein, 0);
   const totalCarbs = todaysMeals.reduce((sum, meal) => sum + meal.carbs, 0);
   const totalFats = todaysMeals.reduce((sum, meal) => sum + meal.fats, 0);
 
   const hasMeals = todaysMeals.length > 0;
+
+  // Water tracking
+  const todayWater = waterIntakes
+    .filter(w => w.date === todayStr)
+    .reduce((sum, w) => sum + w.amount, 0);
+  const waterGoal = profile.targetWater || 2000;
+
+  // Achievements
+  const unlockedAchievements = achievements.filter(a => a.isUnlocked);
+  const recentAchievements = unlockedAchievements.slice(-3);
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -36,8 +49,10 @@ export const HomeScreen: React.FC = () => {
           color={theme.colors.textSecondary} 
           style={styles.dateLabel}
         >
-          {formatDate(today)}
+          {formatDate(todayStr)}
         </Caption>
+
+        <StreakCard />
         
         <DailySummaryCard
           goal={calorieData.goal}
@@ -47,15 +62,24 @@ export const HomeScreen: React.FC = () => {
           style={styles.summaryCard}
         />
 
-        {!hasMeals ? (
+        <WaterTracker
+          consumed={todayWater}
+          goal={waterGoal}
+          onAddWater={addWaterIntake}
+        />
+
+        {recentAchievements.length > 0 && (
           <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-            <EmptyState
-              icon="🍽️"
-              title="No meals logged yet"
-              message="Start tracking your nutrition by adding your first meal of the day!"
-            />
+            <Heading4 style={styles.cardTitle}>Recent Achievements</Heading4>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recentAchievements.map(achievement => (
+                <AchievementBadge key={achievement.id} achievement={achievement} />
+              ))}
+            </ScrollView>
           </View>
-        ) : (
+        )}
+
+        {hasMeals && (
           <>
             <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
               <Heading4 style={styles.cardTitle}>Macronutrients</Heading4>
